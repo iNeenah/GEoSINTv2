@@ -1,7 +1,7 @@
 {
-  "name": "osintito",
+  "name": "geosint-v2",
   "private": true,
-  "version": "0.0.0",
+  "version": "2.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,8 +10,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@heroui/react": "^2.8.2",
-    "framer-motion": "^12.23.12",
     "react": "^19.1.1",
     "react-dom": "^19.1.1"
   },
