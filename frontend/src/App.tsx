@@ -41,6 +41,29 @@ function App() {
   const [isPasting, setIsPasting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const openInGoogleMaps = (lat: number, lng: number, label?: string) => {
+    const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}${label ? `&query_place_id=${encodeURIComponent(label)}` : ''}`;
+    window.open(url, '_blank');
+  };
+
+  const openInGoogleStreetView = (lat: number, lng: number) => {
+    const url = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lng}`;
+    window.open(url, '_blank');
+  };
+
+  const openInGoogleEarth = (lat: number, lng: number) => {
+    const url = `https://earth.google.com/web/@${lat},${lng},1000a,1000d,35y,0h,0t,0r`;
+    window.open(url, '_blank');
+  };
+
+  const copyCoordinates = (lat: number, lng: number) => {
+    const coords = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+    navigator.clipboard.writeText(coords).then(() => {
+      // You could add a toast notification here
+      console.log('Coordinates copied to clipboard:', coords);
+    });
+  };
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
@@ -357,6 +380,107 @@ function App() {
                 </div>
               </div>
 
+              {/* Location Map & Actions */}
+              {analysis.detailed_analysis?.primary_coordinates?.lat && analysis.detailed_analysis?.primary_coordinates?.lng && (
+                <div className="map-section">
+                  <div className="map-header">
+                    <h4>Location Visualization</h4>
+                    <div className="map-actions">
+                      <button 
+                        onClick={() => openInGoogleMaps(
+                          analysis.detailed_analysis!.primary_coordinates.lat!, 
+                          analysis.detailed_analysis!.primary_coordinates.lng!,
+                          analysis.detailed_analysis!.final_assessment.most_probable_location
+                        )}
+                        className="map-btn google-maps-btn"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                          <circle cx="12" cy="10" r="3"/>
+                        </svg>
+                        Google Maps
+                      </button>
+                      <button 
+                        onClick={() => openInGoogleStreetView(
+                          analysis.detailed_analysis!.primary_coordinates.lat!, 
+                          analysis.detailed_analysis!.primary_coordinates.lng!
+                        )}
+                        className="map-btn street-view-btn"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                          <circle cx="12" cy="12" r="3"/>
+                        </svg>
+                        Street View
+                      </button>
+                      <button 
+                        onClick={() => openInGoogleEarth(
+                          analysis.detailed_analysis!.primary_coordinates.lat!, 
+                          analysis.detailed_analysis!.primary_coordinates.lng!
+                        )}
+                        className="map-btn earth-btn"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <circle cx="12" cy="12" r="10"/>
+                          <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
+                          <path d="M2 12h20"/>
+                        </svg>
+                        Google Earth
+                      </button>
+                      <button 
+                        onClick={() => copyCoordinates(
+                          analysis.detailed_analysis!.primary_coordinates.lat!, 
+                          analysis.detailed_analysis!.primary_coordinates.lng!
+                        )}
+                        className="map-btn copy-btn"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                        </svg>
+                        Copy Coords
+                      </button>
+                    </div>
+                  </div>
+                  
+                  <div className="map-container">
+                    <iframe
+                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${analysis.detailed_analysis.primary_coordinates.lng - 0.01},${analysis.detailed_analysis.primary_coordinates.lat - 0.01},${analysis.detailed_analysis.primary_coordinates.lng + 0.01},${analysis.detailed_analysis.primary_coordinates.lat + 0.01}&layer=mapnik&marker=${analysis.detailed_analysis.primary_coordinates.lat},${analysis.detailed_analysis.primary_coordinates.lng}`}
+                      width="100%"
+                      height="400"
+                      style={{ border: 0, borderRadius: '8px' }}
+                      allowFullScreen
+                      loading="lazy"
+                      title="Location Map"
+                    />
+                  </div>
+
+                  <div className="coordinates-display">
+                    <div className="coord-item primary-coord">
+                      <div className="coord-header">
+                        <div className="coord-marker primary"></div>
+                        <span className="coord-label">Primary Location</span>
+                        <span className="coord-confidence">{analysis.detailed_analysis.final_assessment.certainty_percentage}%</span>
+                      </div>
+                      <div className="coord-value">
+                        {analysis.detailed_analysis.primary_coordinates.lat.toFixed(6)}, {analysis.detailed_analysis.primary_coordinates.lng.toFixed(6)}
+                      </div>
+                      <div className="coord-actions">
+                        <button onClick={() => openInGoogleMaps(analysis.detailed_analysis!.primary_coordinates.lat!, analysis.detailed_analysis!.primary_coordinates.lng!)} className="coord-btn">
+                          Maps
+                        </button>
+                        <button onClick={() => openInGoogleStreetView(analysis.detailed_analysis!.primary_coordinates.lat!, analysis.detailed_analysis!.primary_coordinates.lng!)} className="coord-btn">
+                          Street View
+                        </button>
+                        <button onClick={() => copyCoordinates(analysis.detailed_analysis!.primary_coordinates.lat!, analysis.detailed_analysis!.primary_coordinates.lng!)} className="coord-btn">
+                          Copy
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Evidence Analysis */}
               {analysis.detailed_analysis?.evidence && (
                 <div className="evidence-section">
@@ -438,10 +562,48 @@ function App() {
                       location.lat && location.lng && (
                         <div key={index} className="alternative-card">
                           <div className="alternative-header">
-                            <span className="alternative-label">Alternative {index + 1}</span>
+                            <div className="alt-marker-info">
+                              <div className="coord-marker alternative"></div>
+                              <span className="alternative-label">Alternative {index + 1}</span>
+                            </div>
                           </div>
                           <div className="alternative-coords">
                             {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
+                          </div>
+                          <div className="alternative-actions">
+                            <button 
+                              onClick={() => openInGoogleMaps(location.lat!, location.lng!)}
+                              className="alt-btn maps-btn"
+                              title="Open in Google Maps"
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                                <circle cx="12" cy="10" r="3"/>
+                              </svg>
+                              Maps
+                            </button>
+                            <button 
+                              onClick={() => openInGoogleStreetView(location.lat!, location.lng!)}
+                              className="alt-btn street-btn"
+                              title="Open in Street View"
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                <circle cx="12" cy="12" r="3"/>
+                              </svg>
+                              Street View
+                            </button>
+                            <button 
+                              onClick={() => copyCoordinates(location.lat!, location.lng!)}
+                              className="alt-btn copy-btn"
+                              title="Copy coordinates"
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                              </svg>
+                              Copy
+                            </button>
                           </div>
                         </div>
                       )
