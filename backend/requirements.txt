@@ -3,3 +3,5 @@ flask-cors
 python-dotenv
 pillow
 google-generativeai
+google-cloud-vision
+googlemaps

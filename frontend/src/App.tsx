@@ -29,20 +29,26 @@ interface AnalysisResult {
       primary_landmark: string;
     };
   };
+  multi_image_analysis?: {
+    total_images: number;
+    analysis_type: string;
+  };
 }
 
 function App() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [previewUrls, setPreviewUrls] = useState<string[]>([]);
   const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [pasteHint, setPasteHint] = useState(false);
-  const [isPasting, setIsPasting] = useState(false);
+  const [analysisMode, setAnalysisMode] = useState<'single' | 'multi' | 'lens'>('single');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const multiFileInputRef = useRef<HTMLInputElement>(null);
 
-  const openInGoogleMaps = (lat: number, lng: number, label?: string) => {
-    const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}${label ? `&query_place_id=${encodeURIComponent(label)}` : ''}`;
+  const openInGoogleMaps = (lat: number, lng: number) => {
+    const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
     window.open(url, '_blank');
   };
 
@@ -51,106 +57,70 @@ function App() {
     window.open(url, '_blank');
   };
 
-  const openInGoogleEarth = (lat: number, lng: number) => {
-    const url = `https://earth.google.com/web/@${lat},${lng},1000a,1000d,35y,0h,0t,0r`;
-    window.open(url, '_blank');
-  };
-
   const copyCoordinates = (lat: number, lng: number) => {
     const coords = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-    navigator.clipboard.writeText(coords).then(() => {
-      // You could add a toast notification here
-      console.log('Coordinates copied to clipboard:', coords);
-    });
+    navigator.clipboard.writeText(coords);
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       setSelectedFile(file);
-      
-      // Create preview URL
       const url = URL.createObjectURL(file);
       setPreviewUrl(url);
-      
-      // Clear previous results
       setAnalysis(null);
       setError(null);
     }
   };
 
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-    const files = event.dataTransfer.files;
-    if (files && files[0]) {
-      const file = files[0];
-      if (file.type.startsWith('image/')) {
-        setSelectedFile(file);
-        const url = URL.createObjectURL(file);
-        setPreviewUrl(url);
-        setAnalysis(null);
-        setError(null);
+  const handleMultiFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
+      const files = Array.from(event.target.files);
+      
+      if (files.length > 6) {
+        setError("Maximum 6 images allowed for multi-angle analysis");
+        return;
       }
-    }
-  };
-
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-    event.preventDefault();
-  };
-
-  const handlePaste = async (event: ClipboardEvent) => {
-    const items = event.clipboardData?.items;
-    if (!items) return;
-
-    setIsPasting(true);
-    
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      if (item.type.startsWith('image/')) {
-        const file = item.getAsFile();
-        if (file) {
-          // Add a small delay for visual feedback
-          setTimeout(() => {
-            setSelectedFile(file);
-            const url = URL.createObjectURL(file);
-            setPreviewUrl(url);
-            setAnalysis(null);
-            setError(null);
-            setPasteHint(false);
-            setIsPasting(false);
-          }, 300);
-          break;
-        }
+      
+      if (files.length < 2) {
+        setError("Minimum 2 images required for multi-angle analysis");
+        return;
       }
-    }
-    
-    // Reset pasting state if no image was found
-    setTimeout(() => setIsPasting(false), 300);
-  };
-
-  const handleKeyDown = (event: KeyboardEvent) => {
-    // Show paste hint when Ctrl+V is pressed
-    if (event.ctrlKey && event.key === 'v') {
-      setPasteHint(true);
-      setTimeout(() => setPasteHint(false), 2000);
+      
+      setSelectedFiles(files);
+      const urls = files.map(file => URL.createObjectURL(file));
+      setPreviewUrls(urls);
+      setAnalysis(null);
+      setError(null);
     }
   };
 
-  // Add event listeners for paste functionality
-  React.useEffect(() => {
-    document.addEventListener('paste', handlePaste);
-    document.addEventListener('keydown', handleKeyDown);
+  const removeImage = (index: number) => {
+    const updatedFiles = selectedFiles.filter((_, i) => i !== index);
+    const updatedUrls = previewUrls.filter((_, i) => i !== index);
     
-    return () => {
-      document.removeEventListener('paste', handlePaste);
-      document.removeEventListener('keydown', handleKeyDown);
-    };
-  }, []);
+    URL.revokeObjectURL(previewUrls[index]);
+    setSelectedFiles(updatedFiles);
+    setPreviewUrls(updatedUrls);
+    
+    if (updatedFiles.length < 2) {
+      setError("Minimum 2 images required for multi-angle analysis");
+    } else {
+      setError(null);
+    }
+  };
 
   const handleAnalyzeClick = async () => {
-    if (!selectedFile) {
-      setError("Please select an image first.");
-      return;
+    if (analysisMode === 'single' || analysisMode === 'lens') {
+      if (!selectedFile) {
+        setError("Please select an image first.");
+        return;
+      }
+    } else {
+      if (selectedFiles.length < 2) {
+        setError("Please select at least 2 images for multi-angle analysis.");
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -158,36 +128,98 @@ function App() {
     setAnalysis(null);
 
     const formData = new FormData();
-    formData.append('image', selectedFile);
+    
+    if (analysisMode === 'single') {
+      formData.append('image', selectedFile!);
+      
+      try {
+        const response = await fetch('http://localhost:5001/api/analyze', {
+          method: 'POST',
+          body: formData,
+        });
 
-    try {
-      const response = await fetch('http://localhost:5001/api/analyze', {
-        method: 'POST',
-        body: formData,
-      });
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.statusText}`);
+        }
 
-      if (!response.ok) {
-        throw new Error(`Server error: ${response.statusText}`);
+        const data: AnalysisResult = await response.json();
+        setAnalysis(data);
+
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
       }
+    } else if (analysisMode === 'lens') {
+      formData.append('image', selectedFile!);
+      
+      try {
+        const response = await fetch('http://localhost:5001/api/analyze-lens', {
+          method: 'POST',
+          body: formData,
+        });
 
-      const data: AnalysisResult = await response.json();
-      setAnalysis(data);
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.statusText}`);
+        }
 
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
+        const data: AnalysisResult = await response.json();
+        setAnalysis(data);
+
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      selectedFiles.forEach((file) => {
+        formData.append('images', file);
+      });
+      
+      try {
+        const response = await fetch('http://localhost:5001/api/analyze-multi', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server error: ${response.statusText}`);
+        }
+
+        const data: AnalysisResult = await response.json();
+        setAnalysis(data);
+
+      } catch (err: any) {
+        setError(err.message);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
   const clearSelection = () => {
-    setSelectedFile(null);
-    setPreviewUrl(null);
+    if (analysisMode === 'single' || analysisMode === 'lens') {
+      setSelectedFile(null);
+      setPreviewUrl(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
+    } else {
+      previewUrls.forEach(url => URL.revokeObjectURL(url));
+      setSelectedFiles([]);
+      setPreviewUrls([]);
+      if (multiFileInputRef.current) {
+        multiFileInputRef.current.value = '';
+      }
+    }
+    
     setAnalysis(null);
     setError(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+  };
+
+  const switchMode = (mode: 'single' | 'multi' | 'lens') => {
+    clearSelection();
+    setAnalysisMode(mode);
   };
 
   return (
@@ -195,15 +227,13 @@ function App() {
       {/* Header */}
       <header className="header">
         <div className="container">
-          <div className="logo">
-            <h1>GeoSINT</h1>
-            <span className="version">v2.0</span>
+          <div className="header-brand">
+            <div className="logo">
+              <span className="logo-text">GeoSINT</span>
+              <span className="logo-badge">AI</span>
+            </div>
+            <p className="header-description">Powered by Advanced Geolocation Intelligence</p>
           </div>
-          <nav className="nav">
-            <a href="#" className="nav-link">Documentation</a>
-            <a href="#" className="nav-link">API</a>
-            <a href="https://github.com/iNeenah/GEoSINTv2" className="nav-link">GitHub</a>
-          </nav>
         </div>
       </header>
 
@@ -224,75 +254,161 @@ function App() {
       {/* Main Content */}
       <main className="main">
         <div className="container">
-          <div className="upload-section">
-            <div 
-              className={`upload-area ${selectedFile ? 'has-file' : ''} ${isPasting ? 'pasting' : ''}`}
-              onDrop={handleDrop}
-              onDragOver={handleDragOver}
-              onClick={() => fileInputRef.current?.click()}
-              tabIndex={0}
-            >
-              {!selectedFile ? (
-                <div className="upload-placeholder">
-                  <div className="upload-icon">
-                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                      <polyline points="7,10 12,15 17,10"/>
-                      <line x1="12" y1="15" x2="12" y2="3"/>
-                    </svg>
-                  </div>
-                  <h3>Drop your image here</h3>
-                  <p>or click to browse files</p>
-                  <div className="upload-methods">
-                    <div className="method-item">
-                      <kbd>Ctrl</kbd> + <kbd>V</kbd>
-                      <span>Paste from clipboard</span>
-                    </div>
-                    <div className="method-item">
-                      <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + <kbd>S</kbd>
-                      <span>Screenshot & paste</span>
-                    </div>
-                  </div>
-                  <span className="file-types">Supports JPG, PNG, GIF up to 10MB</span>
-                  {pasteHint && (
-                    <div className="paste-hint">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-                      </svg>
-                      Ready to paste image from clipboard
-                    </div>
-                  )}
+          {/* Analysis Mode Selector */}
+          <div className="mode-selector">
+            <h3>Analysis Mode</h3>
+            <div className="mode-buttons">
+              <button 
+                className={`mode-btn ${analysisMode === 'single' ? 'active' : ''}`}
+                onClick={() => switchMode('single')}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="3" ry="3"/>
+                  <circle cx="9" cy="9" r="2"/>
+                  <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+                </svg>
+                <div className="mode-info">
+                  <span className="mode-title">AI Analysis</span>
+                  <span className="mode-desc">Standard OSINT analysis</span>
                 </div>
-              ) : (
-                <div className="file-preview">
-                  {previewUrl && (
-                    <img src={previewUrl} alt="Preview" className="preview-image" />
-                  )}
-                  <div className="file-info">
-                    <h4>{selectedFile.name}</h4>
-                    <p>{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
-                    <div className="file-actions">
-                      <button onClick={clearSelection} className="clear-btn" title="Remove image">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <line x1="18" y1="6" x2="6" y2="18"/>
-                          <line x1="6" y1="6" x2="18" y2="18"/>
-                        </svg>
-                        Clear
-                      </button>
-                      <button onClick={() => fileInputRef.current?.click()} className="replace-btn" title="Replace with another image">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                          <polyline points="7,10 12,15 17,10"/>
-                          <line x1="12" y1="15" x2="12" y2="3"/>
-                        </svg>
-                        Replace
-                      </button>
-                    </div>
-                  </div>
+              </button>
+              
+              <button 
+                className={`mode-btn ${analysisMode === 'lens' ? 'active' : ''}`}
+                onClick={() => switchMode('lens')}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <circle cx="11" cy="11" r="8"/>
+                  <path d="M21 21l-4.35-4.35"/>
+                  <circle cx="11" cy="11" r="3"/>
+                </svg>
+                <div className="mode-info">
+                  <span className="mode-title">Google Lens</span>
+                  <span className="mode-desc">Web image matching</span>
                 </div>
-              )}
+              </button>
+              
+              <button 
+                className={`mode-btn ${analysisMode === 'multi' ? 'active' : ''}`}
+                onClick={() => switchMode('multi')}
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <rect x="3" y="3" width="7" height="7" rx="1"/>
+                  <rect x="14" y="3" width="7" height="7" rx="1"/>
+                  <rect x="14" y="14" width="7" height="7" rx="1"/>
+                  <rect x="3" y="14" width="7" height="7" rx="1"/>
+                </svg>
+                <div className="mode-info">
+                  <span className="mode-title">Multi-Angle Analysis</span>
+                  <span className="mode-desc">360° precision with 2-6 images</span>
+                </div>
+              </button>
             </div>
+          </div>
+
+          <div className="upload-section">
+            {analysisMode === 'single' || analysisMode === 'lens' ? (
+              <div 
+                className={`upload-area ${selectedFile ? 'has-file' : ''}`}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                {!selectedFile ? (
+                  <div className="upload-placeholder">
+                    <div className="upload-icon">
+                      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                        <polyline points="7,10 12,15 17,10"/>
+                        <line x1="12" y1="15" x2="12" y2="3"/>
+                      </svg>
+                    </div>
+                    <h3>{analysisMode === 'lens' ? 'Drop your image for Google Lens analysis' : 'Drop your image here'}</h3>
+                    <p>{analysisMode === 'lens' ? 'Find this location on the web' : 'or click to browse files'}</p>
+                    <span className="file-types">
+                      {analysisMode === 'lens' 
+                        ? 'Google Lens will search billions of web images • JPG, PNG, GIF' 
+                        : 'Supports JPG, PNG, GIF up to 10MB'
+                      }
+                    </span>
+                  </div>
+                ) : (
+                  <div className="file-preview">
+                    {previewUrl && (
+                      <img src={previewUrl} alt="Preview" className="preview-image" />
+                    )}
+                    <div className="file-info">
+                      <h4>{selectedFile.name}</h4>
+                      <p>{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
+                      <div className="file-actions">
+                        <button onClick={clearSelection} className="clear-btn">
+                          Clear
+                        </button>
+                        <button onClick={() => fileInputRef.current?.click()} className="replace-btn">
+                          Replace
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="multi-upload-area">
+                <div className="multi-upload-header">
+                  <h3>Multi-Angle Analysis</h3>
+                  <p>Upload 2-6 images of the same location from different angles for enhanced precision</p>
+                </div>
+                
+                {selectedFiles.length === 0 ? (
+                  <div 
+                    className="upload-area multi-empty"
+                    onClick={() => multiFileInputRef.current?.click()}
+                  >
+                    <div className="upload-icon">
+                      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                        <rect x="3" y="3" width="7" height="7" rx="1"/>
+                        <rect x="14" y="3" width="7" height="7" rx="1"/>
+                        <rect x="14" y="14" width="7" height="7" rx="1"/>
+                        <rect x="3" y="14" width="7" height="7" rx="1"/>
+                      </svg>
+                    </div>
+                    <h3>Select Multiple Images</h3>
+                    <p>Choose 2-6 images of the same location</p>
+                    <span className="file-types">Different angles • Same location • JPG, PNG, GIF</span>
+                  </div>
+                ) : (
+                  <div className="multi-preview-grid">
+                    {previewUrls.map((url, index) => (
+                      <div key={index} className="multi-preview-item">
+                        <img src={url} alt={`Preview ${index + 1}`} className="multi-preview-image" />
+                        <div className="multi-preview-info">
+                          <span className="image-number">Image {index + 1}</span>
+                          <button 
+                            onClick={() => removeImage(index)} 
+                            className="remove-image-btn"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                <div className="multi-upload-actions">
+                  <button 
+                    onClick={() => multiFileInputRef.current?.click()} 
+                    className="multi-select-btn"
+                  >
+                    {selectedFiles.length === 0 ? 'Select Images' : 'Add More Images'}
+                  </button>
+                  
+                  {selectedFiles.length > 0 && (
+                    <button onClick={clearSelection} className="clear-all-btn">
+                      Clear All
+                    </button>
+                  )}
+                </div>
+              </div>
+            )}
 
             <input
               ref={fileInputRef}
@@ -301,35 +417,68 @@ function App() {
               onChange={handleFileChange}
               className="file-input"
             />
+            
+            <input
+              ref={multiFileInputRef}
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleMultiFileChange}
+              className="file-input"
+            />
 
             <div className="action-section">
               <button 
                 onClick={handleAnalyzeClick} 
-                disabled={!selectedFile || isLoading}
+                disabled={
+                  ((analysisMode === 'single' || analysisMode === 'lens') && !selectedFile) || 
+                  (analysisMode === 'multi' && selectedFiles.length < 2) || 
+                  isLoading
+                }
                 className="analyze-btn"
               >
                 {isLoading ? (
                   <>
                     <div className="spinner"></div>
-                    Analyzing...
+                    {analysisMode === 'single' ? 'Analyzing...' : 
+                     analysisMode === 'lens' ? 'Searching web images...' :
+                     `Analyzing ${selectedFiles.length} images...`}
                   </>
                 ) : (
-                  'Analyze Image'
+                  <>
+                    {analysisMode === 'single' ? 'Analyze Image' : 
+                     analysisMode === 'lens' ? (
+                       <>
+                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                           <circle cx="11" cy="11" r="8"/>
+                           <path d="M21 21l-4.35-4.35"/>
+                         </svg>
+                         Google Lens Search
+                       </>
+                     ) : 
+                     `Analyze ${selectedFiles.length} Images (360° Mode)`}
+                  </>
                 )}
               </button>
+              
+              {analysisMode === 'multi' && selectedFiles.length > 0 && (
+                <div className="analysis-info">
+                  <div className="info-item">
+                    <span className="info-label">Images:</span>
+                    <span className="info-value">{selectedFiles.length}/6</span>
+                  </div>
+                  <div className="info-item">
+                    <span className="info-label">Mode:</span>
+                    <span className="info-value">Multi-Angle Precision</span>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
           {/* Error Display */}
           {error && (
             <div className="error-card">
-              <div className="error-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <circle cx="12" cy="12" r="10"/>
-                  <line x1="15" y1="9" x2="9" y2="15"/>
-                  <line x1="9" y1="9" x2="15" y2="15"/>
-                </svg>
-              </div>
               <p>{error}</p>
             </div>
           )}
@@ -371,10 +520,6 @@ function App() {
                         <span className="label">Primary Landmark:</span>
                         <span className="value">{analysis.detailed_analysis.final_assessment.primary_landmark}</span>
                       </div>
-                      <div className="location-item full-width">
-                        <span className="label">Most Probable Location:</span>
-                        <span className="value">{analysis.detailed_analysis.final_assessment.most_probable_location}</span>
-                      </div>
                     </>
                   )}
                 </div>
@@ -389,15 +534,10 @@ function App() {
                       <button 
                         onClick={() => openInGoogleMaps(
                           analysis.detailed_analysis!.primary_coordinates.lat!, 
-                          analysis.detailed_analysis!.primary_coordinates.lng!,
-                          analysis.detailed_analysis!.final_assessment.most_probable_location
+                          analysis.detailed_analysis!.primary_coordinates.lng!
                         )}
                         className="map-btn google-maps-btn"
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                          <circle cx="12" cy="10" r="3"/>
-                        </svg>
                         Google Maps
                       </button>
                       <button 
@@ -407,25 +547,7 @@ function App() {
                         )}
                         className="map-btn street-view-btn"
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                          <circle cx="12" cy="12" r="3"/>
-                        </svg>
                         Street View
-                      </button>
-                      <button 
-                        onClick={() => openInGoogleEarth(
-                          analysis.detailed_analysis!.primary_coordinates.lat!, 
-                          analysis.detailed_analysis!.primary_coordinates.lng!
-                        )}
-                        className="map-btn earth-btn"
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <circle cx="12" cy="12" r="10"/>
-                          <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/>
-                          <path d="M2 12h20"/>
-                        </svg>
-                        Google Earth
                       </button>
                       <button 
                         onClick={() => copyCoordinates(
@@ -434,10 +556,6 @@ function App() {
                         )}
                         className="map-btn copy-btn"
                       >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                        </svg>
                         Copy Coords
                       </button>
                     </div>
@@ -454,30 +572,6 @@ function App() {
                       title="Location Map"
                     />
                   </div>
-
-                  <div className="coordinates-display">
-                    <div className="coord-item primary-coord">
-                      <div className="coord-header">
-                        <div className="coord-marker primary"></div>
-                        <span className="coord-label">Primary Location</span>
-                        <span className="coord-confidence">{analysis.detailed_analysis.final_assessment.certainty_percentage}%</span>
-                      </div>
-                      <div className="coord-value">
-                        {analysis.detailed_analysis.primary_coordinates.lat.toFixed(6)}, {analysis.detailed_analysis.primary_coordinates.lng.toFixed(6)}
-                      </div>
-                      <div className="coord-actions">
-                        <button onClick={() => openInGoogleMaps(analysis.detailed_analysis!.primary_coordinates.lat!, analysis.detailed_analysis!.primary_coordinates.lng!)} className="coord-btn">
-                          Maps
-                        </button>
-                        <button onClick={() => openInGoogleStreetView(analysis.detailed_analysis!.primary_coordinates.lat!, analysis.detailed_analysis!.primary_coordinates.lng!)} className="coord-btn">
-                          Street View
-                        </button>
-                        <button onClick={() => copyCoordinates(analysis.detailed_analysis!.primary_coordinates.lat!, analysis.detailed_analysis!.primary_coordinates.lng!)} className="coord-btn">
-                          Copy
-                        </button>
-                      </div>
-                    </div>
-                  </div>
                 </div>
               )}
 
@@ -487,67 +581,20 @@ function App() {
                   <h4>Forensic Evidence Analysis</h4>
                   <div className="evidence-grid">
                     <div className="evidence-card">
-                      <div className="evidence-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                          <path d="M9 11H5a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7a2 2 0 0 0-2-2h-4"/>
-                          <polyline points="9,11 12,14 15,11"/>
-                          <line x1="12" y1="14" x2="12" y2="3"/>
-                        </svg>
-                      </div>
-                      <div className="evidence-content">
-                        <h5>Signage</h5>
-                        <p>{analysis.detailed_analysis.evidence.signage}</p>
-                      </div>
+                      <h5>Signage</h5>
+                      <p>{analysis.detailed_analysis.evidence.signage}</p>
                     </div>
-
                     <div className="evidence-card">
-                      <div className="evidence-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                          <polyline points="9,22 9,12 15,12 15,22"/>
-                        </svg>
-                      </div>
-                      <div className="evidence-content">
-                        <h5>Infrastructure</h5>
-                        <p>{analysis.detailed_analysis.evidence.infrastructure}</p>
-                      </div>
+                      <h5>Infrastructure</h5>
+                      <p>{analysis.detailed_analysis.evidence.infrastructure}</p>
                     </div>
-
                     <div className="evidence-card">
-                      <div className="evidence-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
-                        </svg>
-                      </div>
-                      <div className="evidence-content">
-                        <h5>Architecture</h5>
-                        <p>{analysis.detailed_analysis.evidence.architecture}</p>
-                      </div>
+                      <h5>Architecture</h5>
+                      <p>{analysis.detailed_analysis.evidence.architecture}</p>
                     </div>
-
                     <div className="evidence-card">
-                      <div className="evidence-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                        </svg>
-                      </div>
-                      <div className="evidence-content">
-                        <h5>Environment</h5>
-                        <p>{analysis.detailed_analysis.evidence.environment}</p>
-                      </div>
-                    </div>
-
-                    <div className="evidence-card">
-                      <div className="evidence-icon">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                          <circle cx="12" cy="12" r="3"/>
-                          <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1"/>
-                        </svg>
-                      </div>
-                      <div className="evidence-content">
-                        <h5>Cultural Elements</h5>
-                        <p>{analysis.detailed_analysis.evidence.cultural_elements}</p>
-                      </div>
+                      <h5>Environment</h5>
+                      <p>{analysis.detailed_analysis.evidence.environment}</p>
                     </div>
                   </div>
                 </div>
@@ -562,10 +609,7 @@ function App() {
                       location.lat && location.lng && (
                         <div key={index} className="alternative-card">
                           <div className="alternative-header">
-                            <div className="alt-marker-info">
-                              <div className="coord-marker alternative"></div>
-                              <span className="alternative-label">Alternative {index + 1}</span>
-                            </div>
+                            <span className="alternative-label">Alternative {index + 1}</span>
                           </div>
                           <div className="alternative-coords">
                             {location.lat.toFixed(6)}, {location.lng.toFixed(6)}
@@ -573,35 +617,20 @@ function App() {
                           <div className="alternative-actions">
                             <button 
                               onClick={() => openInGoogleMaps(location.lat!, location.lng!)}
-                              className="alt-btn maps-btn"
-                              title="Open in Google Maps"
+                              className="alt-btn"
                             >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
-                                <circle cx="12" cy="10" r="3"/>
-                              </svg>
                               Maps
                             </button>
                             <button 
                               onClick={() => openInGoogleStreetView(location.lat!, location.lng!)}
-                              className="alt-btn street-btn"
-                              title="Open in Street View"
+                              className="alt-btn"
                             >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-                                <circle cx="12" cy="12" r="3"/>
-                              </svg>
                               Street View
                             </button>
                             <button 
                               onClick={() => copyCoordinates(location.lat!, location.lng!)}
-                              className="alt-btn copy-btn"
-                              title="Copy coordinates"
+                              className="alt-btn"
                             >
-                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
-                              </svg>
                               Copy
                             </button>
                           </div>
