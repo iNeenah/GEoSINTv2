@@ -10,14 +10,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "gsap": "^3.13.0",
     "react": "^19.1.1",
-    "react-dom": "^19.1.1"
+    "react-dom": "^19.1.1",
+    "split-type": "^0.3.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.32.0",
+    "@types/leaflet": "^1.9.12",
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7",
-    "@types/leaflet": "^1.9.12",
     "@vitejs/plugin-react": "^4.7.0",
     "eslint": "^9.32.0",
     "eslint-plugin-react-hooks": "^5.2.0",

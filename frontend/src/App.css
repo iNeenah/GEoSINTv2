@@ -63,7 +63,7 @@ body {
 .header .container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 1.5rem 2rem;
+  padding: 2rem;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -71,6 +71,10 @@ body {
 
 .header-brand {
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
 }
 
 .logo {
@@ -78,19 +82,14 @@ body {
   align-items: center;
   justify-content: center;
   gap: 1rem;
-  margin-bottom: 0.75rem;
 }
 
 .logo-text {
   font-size: 3rem;
   font-weight: 900;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  color: var(--text-primary);
   letter-spacing: -0.03em;
-  text-shadow: 0 0 40px rgba(102, 126, 234, 0.4);
   position: relative;
 }
 
@@ -125,18 +124,165 @@ body {
   letter-spacing: 0.05em;
 }
 
+
+
+/* Text Animator Styles - Codrops Effect 3 */
+.text-animator {
+  position: relative;
+  display: inline-block;
+  cursor: pointer;
+  font-kerning: none;
+  white-space: nowrap;
+}
+
+.text-animator .word {
+  white-space: nowrap;
+}
+
+.text-animator .char {
+  position: relative;
+  display: inline-block;
+  transition: all 0.3s ease;
+}
+
+.text-animator:hover .char {
+  text-shadow: 0 0 10px currentColor;
+}
+
+/* Specific styles for different TextAnimator elements */
+.logo-text {
+  font-size: 3rem;
+  font-weight: 900;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  color: #ffffff;
+  letter-spacing: -0.03em;
+  text-shadow: 0 2px 10px rgba(102, 126, 234, 0.3);
+}
+
+.logo-badge {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 16px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  font-family: 'Inter', sans-serif;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  text-shadow: none;
+}
+
+/* Specific styles for different TextAnimator elements */
 .header-description {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-primary);
   font-size: 1.1rem;
   font-weight: 500;
   font-family: 'Inter', sans-serif;
-  margin: 0;
   letter-spacing: 0.02em;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(102, 126, 234, 0.7) 100%);
+  text-align: center;
+  margin: 0;
+}
+
+.hero-title {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.hero-title h2 {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 0;
+  text-align: center;
+}
+
+.mode-selector-title {
+  text-align: center;
+  margin-bottom: 2rem;
+  display: inline-block;
+}
+
+.mode-selector-title h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.mode-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.results-title h3 {
+  font-size: 2rem;
+  font-weight: 800;
+  background: var(--primary-gradient);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  text-shadow: 0 2px 10px rgba(102, 126, 234, 0.2);
+  margin: 0;
+}
+
+.section-title h4 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.header-description {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.1rem;
+  font-weight: 500;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 0.02em;
+  text-align: center;
+  margin: 0;
+  text-shadow: 0 1px 5px rgba(102, 126, 234, 0.2);
+}
+
+.hero-title {
+  text-align: center;
+  margin-bottom: 1.5rem;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.hero-title h2 {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  margin: 0;
+  text-align: center;
+}
+
+
+
+.results-title h3 {
+  font-size: 2rem;
+  font-weight: 800;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0;
+}
+
+.section-title h4 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
 }
 
 /* Hero Section */
@@ -144,25 +290,23 @@ body {
   padding: 6rem 0 4rem;
   text-align: center;
   position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40vh;
 }
 
 .hero-content {
-  max-width: 800px;
+  max-width: 900px;
   margin: 0 auto;
   padding: 0 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
-.hero-title {
-  font-size: clamp(2.5rem, 5vw, 4rem);
-  font-weight: 800;
-  margin-bottom: 1.5rem;
-  background: linear-gradient(135deg, #ffffff 0%, rgba(255, 255, 255, 0.8) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  letter-spacing: -0.02em;
-  line-height: 1.1;
-}
+
 
 .hero-subtitle {
   font-size: 1.25rem;
@@ -170,6 +314,10 @@ body {
   margin-bottom: 3rem;
   font-weight: 400;
   line-height: 1.6;
+  text-align: center;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Main Content */
@@ -186,14 +334,26 @@ body {
 /* Mode Selector */
 .mode-selector {
   margin-bottom: 3rem;
+  text-align: center;
 }
 
-.mode-selector h3 {
+/* Mode Selector */
+.mode-selector {
+  margin-bottom: 3rem;
   text-align: center;
+}
+
+.mode-selector-title {
+  text-align: center;
+  margin-bottom: 2rem;
+  display: inline-block;
+}
+
+.mode-selector-title h3 {
   font-size: 1.5rem;
   font-weight: 700;
-  margin-bottom: 2rem;
   color: var(--text-primary);
+  margin: 0;
 }
 
 .mode-buttons {
@@ -742,8 +902,34 @@ body {
     font-size: 1rem;
   }
   
+  /* Adjust text animator for mobile */
+  .logo-text {
+    font-size: 2.5rem;
+  }
+  
+  .header-description {
+    font-size: 1rem;
+  }
+  
+  .hero-title h2 {
+    font-size: 2.5rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1.1rem;
+  }
+  
+  .header .container {
+    padding: 1.5rem;
+  }
+  
   .hero {
     padding: 4rem 0 2rem;
+    min-height: 30vh;
+  }
+  
+  .hero-content {
+    padding: 0 1rem;
   }
   
   .mode-buttons {
@@ -805,6 +991,31 @@ body {
   
   .header-description {
     font-size: 0.9rem;
+  }
+  
+  /* Further adjust text animator for small mobile */
+  .logo-text {
+    font-size: 2rem;
+  }
+  
+  .header-description {
+    font-size: 0.9rem;
+  }
+  
+  .hero-title h2 {
+    font-size: 2rem;
+  }
+  
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+  
+  .header .container {
+    padding: 1rem;
+  }
+  
+  .header-brand {
+    gap: 0.75rem;
   }
   
   .hero-title {
@@ -1197,6 +1408,20 @@ Section with Aura Design */
     opacity: 1;
     transform: translateX(0);
   }
+}
+
+/* Text Animator Glow Effect */
+@keyframes textGlow {
+  0%, 100% {
+    text-shadow: 0 0 5px currentColor;
+  }
+  50% {
+    text-shadow: 0 0 20px currentColor, 0 0 30px currentColor;
+  }
+}
+
+.text-animator:hover .char {
+  animation: textGlow 2s ease-in-out infinite;
 }
 
 .results-section {

@@ -1,214 +1,265 @@
-# GeoSINT v2
+# 🌍 GeoSINT v2.0 - AI-Powered Geospatial Intelligence
 
-A sophisticated geospatial intelligence tool that leverages Google's Gemini AI to analyze images and extract geographical information, architectural details, and location insights.
+<div align="center">
 
-## Overview
+![GeoSINT Logo](https://img.shields.io/badge/GeoSINT-v2.0-blue?style=for-the-badge&logo=earth&logoColor=white)
+![React](https://img.shields.io/badge/React-18.0-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![Python](https://img.shields.io/badge/Python-3.8+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
 
-GeoSINT v2 is a full-stack application designed for Open Source Intelligence (OSINT) practitioners, researchers, and analysts who need to identify geographical locations from images. The tool combines modern web technologies with advanced AI capabilities to provide detailed location analysis including coordinates, regional information, and contextual reasoning.
+**Advanced OSINT tool for geolocation analysis using AI-powered image recognition**
 
-## Features
+[🚀 Live Demo](#) • [📖 Documentation](#setup) • [🐛 Report Bug](https://github.com/iNeenah/GEoSINTv2/issues) • [✨ Request Feature](https://github.com/iNeenah/GEoSINTv2/issues)
 
-- **AI-Powered Analysis**: Utilizes Google Gemini Pro Vision for advanced image recognition
-- **Geographical Intelligence**: Extracts country, region, and coordinate information
-- **Architectural Recognition**: Identifies distinctive building styles and landmarks
-- **Confidence Scoring**: Provides reliability metrics for analysis results
-- **Modern Interface**: Clean, responsive React-based user interface
-- **RESTful API**: Well-structured backend API for integration capabilities
+</div>
 
-## Architecture
+---
 
-```
-GeoSINT v2/
-├── frontend/                 # React + TypeScript + Vite
-│   ├── src/
-│   │   ├── App.tsx          # Main application component
-│   │   ├── App.css          # Application styling
-│   │   └── ...
-│   ├── package.json
-│   └── vite.config.ts
-├── backend/                  # Python Flask API
-│   ├── app.py               # Main Flask application
-│   ├── requirements.txt     # Python dependencies
-│   ├── .env                 # Environment variables
-│   └── test_api.py          # API testing utility
-└── README.md
-```
+## ✨ Features
 
-## Prerequisites
+### 🤖 **AI-Powered Analysis**
+- **Google Gemini Vision API** integration for intelligent image analysis
+- **Advanced pattern recognition** for architectural and environmental elements
+- **Confidence scoring** with detailed reasoning for each analysis
+
+### 🔍 **Multiple Analysis Modes**
+- **🎯 AI Analysis**: Standard OSINT analysis using Gemini Vision
+- **🔎 Google Lens**: Web-based image matching for location identification  
+- **📐 Multi-Angle Analysis**: Upload 2-6 images for 360° precision analysis
+
+### 🗺️ **Interactive Mapping**
+- **OpenStreetMap integration** with embedded maps
+- **Google Maps & Street View** direct links
+- **Coordinate copying** for external tools
+- **Alternative locations** with confidence ratings
+
+### 🔬 **Forensic Evidence Analysis**
+- **Architectural analysis**: Building styles, materials, construction methods
+- **Environmental factors**: Climate, vegetation, terrain analysis
+- **Cultural elements**: Signage, language, regional indicators
+- **Infrastructure assessment**: Roads, utilities, urban planning
+
+### 🎨 **Modern UI/UX**
+- **Glassmorphism design** inspired by modern web standards
+- **Codrops text animations** with hover effects
+- **Responsive design** for all devices
+- **Dark theme** optimized for professional use
+
+---
+
+## 🛠️ Tech Stack
+
+<div align="center">
+
+| Frontend | Backend | AI/APIs | Styling |
+|----------|---------|---------|---------|
+| React 18 | Python 3.8+ | Google Gemini | Modern CSS |
+| TypeScript | Flask | Google Lens API | Glassmorphism |
+| Vite | CORS | Google Maps API | GSAP Animations |
+| GSAP | Requests | OpenStreetMap | Inter Font |
+
+</div>
+
+---
+
+## 🚀 Quick Start
+
+### 📋 Prerequisites
 
 - **Python 3.8+** with pip
 - **Node.js 16+** with npm
-- **Google Gemini API Key** (obtain from Google AI Studio)
+- **Google Cloud API key** with Gemini API access
+- **Google Maps API key** (optional, for enhanced mapping)
 
-## Installation
+### ⚡ Installation
 
-### Backend Setup
+1. **Clone the repository**
+```bash
+git clone https://github.com/iNeenah/GEoSINTv2.git
+cd GEoSINTv2
+```
 
-1. Navigate to the backend directory:
+2. **Backend Setup**
 ```bash
 cd backend
-```
-
-2. Create and activate a virtual environment:
-```bash
 python -m venv venv
-# Windows
-venv\Scripts\activate
-# macOS/Linux
-source venv/bin/activate
-```
-
-3. Install Python dependencies:
-```bash
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. Configure environment variables:
-   - Copy your Google Gemini API key
-   - Ensure the `.env` file contains: `GEMINI_API_KEY=your_api_key_here`
-
-### Frontend Setup
-
-1. Navigate to the frontend directory:
+3. **Environment Configuration**
 ```bash
-cd frontend
+# Create .env file in backend directory
+GEMINI_API_KEY=your_gemini_api_key_here
+GOOGLE_CLOUD_API_KEY=your_google_cloud_api_key_here
+GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
 ```
 
-2. Install Node.js dependencies:
+4. **Frontend Setup**
 ```bash
+cd ../frontend
 npm install
 ```
 
-## Usage
-
-### Starting the Application
-
-1. **Start the Backend Server**:
+5. **Start the Application**
 ```bash
+# Terminal 1 - Backend
 cd backend
 python app.py
-```
-The API server will be available at `http://localhost:5001`
 
-2. **Start the Frontend Development Server**:
-```bash
+# Terminal 2 - Frontend  
 cd frontend
 npm run dev
 ```
-The web interface will be available at `http://localhost:5173`
 
-### Using the Interface
+6. **Open your browser** to `http://localhost:5173`
 
-1. Open your web browser and navigate to the frontend URL
-2. Click "Choose File" to select an image for analysis
-3. Click "Analizar Imagen" to begin the analysis process
-4. Review the results including:
-   - **Country**: Identified nation or territory
-   - **Region/City**: Specific location details
-   - **Coordinates**: Geographical coordinates when available
-   - **Confidence**: Reliability score of the analysis
-   - **Reasoning**: Detailed explanation of the identification process
+---
 
-## API Reference
+## 📖 Usage Guide
 
-### POST /api/analyze
+### 🎯 **Analysis Modes**
 
-Analyzes an uploaded image for geographical information.
+#### **AI Analysis**
+- Upload a single image
+- Get comprehensive OSINT analysis
+- Receive detailed forensic breakdown
+- View confidence scores and reasoning
 
-**Request:**
-- Method: `POST`
-- Content-Type: `multipart/form-data`
-- Body: Form data with `image` field containing the image file
+#### **Google Lens**
+- Leverage web image matching
+- Find similar images across the internet
+- Identify landmarks and popular locations
+- Cross-reference with online databases
 
-**Response:**
+#### **Multi-Angle Analysis**
+- Upload 2-6 images of the same location
+- Enhanced precision through multiple perspectives
+- 360° analysis for comprehensive coverage
+- Improved accuracy for complex locations
+
+### 🗺️ **Results Interpretation**
+
+- **Primary Location**: Most likely coordinates with confidence score
+- **Alternative Locations**: Additional possibilities ranked by probability
+- **Evidence Analysis**: Detailed breakdown of visual elements
+- **Interactive Maps**: Explore results with multiple map services
+
+---
+
+## 🔧 API Reference
+
+### Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| `POST` | `/api/analyze` | Single image AI analysis |
+| `POST` | `/api/analyze-lens` | Google Lens image matching |
+| `POST` | `/api/analyze-multi` | Multi-image analysis (2-6 images) |
+
+### Request Format
+
+```javascript
+// Single Image Analysis
+const formData = new FormData();
+formData.append('image', imageFile);
+
+fetch('/api/analyze', {
+  method: 'POST',
+  body: formData
+});
+```
+
+### Response Format
+
 ```json
 {
-  "country": "Spain",
-  "region_or_city": "Barcelona, Catalonia",
-  "coordinates": "41.3851, 2.1734",
-  "confidence": "High",
-  "reasoning": "The architectural style shows typical Catalan modernist features..."
+  "country": "United States",
+  "region_or_city": "New York City",
+  "coordinates": "40.7128, -74.0060",
+  "confidence": "High (85%)",
+  "reasoning": "Detailed analysis...",
+  "detailed_analysis": {
+    "primary_coordinates": {
+      "lat": 40.7128,
+      "lng": -74.0060
+    },
+    "evidence": {
+      "signage": "English language signs...",
+      "infrastructure": "Urban architecture...",
+      "architecture": "Modern skyscrapers...",
+      "environment": "Temperate climate..."
+    }
+  }
 }
 ```
 
-**Error Response:**
-```json
-{
-  "error": "Error message description"
-}
-```
+---
 
-## Development
+## 🎨 Design Features
 
-### Testing the API
+### **Modern UI Elements**
+- **Glassmorphism effects** with backdrop blur
+- **Gradient overlays** and smooth transitions
+- **Interactive hover states** with GSAP animations
+- **Responsive grid layouts** for all screen sizes
 
-Use the included test utility to verify backend functionality:
+### **Text Animations**
+- **Codrops-inspired effects** with character morphing
+- **Hover-triggered animations** for enhanced interactivity
+- **Smooth transitions** with cubic-bezier easing
+- **Professional typography** using Inter font family
 
-```bash
-cd backend
-python test_api.py
-```
+---
 
-### Building for Production
+## 🤝 Contributing
 
-**Frontend:**
-```bash
-cd frontend
-npm run build
-```
+We welcome contributions! Here's how you can help:
 
-**Backend:**
-For production deployment, consider using a WSGI server like Gunicorn:
-```bash
-pip install gunicorn
-gunicorn -w 4 -b 0.0.0.0:5001 app:app
-```
+1. **🍴 Fork** the repository
+2. **🌿 Create** a feature branch (`git checkout -b feature/AmazingFeature`)
+3. **💾 Commit** your changes (`git commit -m 'Add some AmazingFeature'`)
+4. **📤 Push** to the branch (`git push origin feature/AmazingFeature`)
+5. **🔄 Open** a Pull Request
 
-## Technology Stack
+### **Development Guidelines**
+- Follow existing code style and conventions
+- Add comments for complex logic
+- Test your changes thoroughly
+- Update documentation as needed
 
-**Frontend:**
-- React 19.1.1
-- TypeScript 5.8.3
-- Vite 7.1.0
-- Modern CSS3
+---
 
-**Backend:**
-- Python 3.8+
-- Flask 3.1.1
-- Google Generative AI 0.8.5
-- Flask-CORS for cross-origin requests
-- Pillow for image processing
+## 📄 License
 
-**AI/ML:**
-- Google Gemini Pro Vision
-- Advanced computer vision capabilities
-- Natural language processing for detailed analysis
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
 
-## Security Considerations
+---
 
-- API keys are stored in environment variables
-- CORS is configured for development (adjust for production)
-- Input validation is implemented for file uploads
-- Error handling prevents information leakage
+## ⚠️ Disclaimer
 
-## Contributing
+**Important**: This tool is designed for **educational and legitimate OSINT purposes only**. 
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+- Always respect **privacy laws** and regulations
+- Follow **ethical guidelines** when conducting analysis
+- Obtain **proper authorization** before analyzing images
+- Use responsibly for **legitimate research** and investigation
 
-## License
+---
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+## 🙏 Acknowledgments
 
-## Acknowledgments
+- **Google Gemini API** for AI-powered image analysis
+- **Codrops** for text animation inspiration
+- **OpenStreetMap** for mapping services
+- **React & TypeScript** communities for excellent tooling
 
-- Google AI team for the Gemini API
-- Open source community for the underlying technologies
-- OSINT community for inspiration and use cases
+---
 
-## Support
+<div align="center">
 
-For issues, questions, or contributions, please visit the [GitHub repository](https://github.com/iNeenah/GEoSINTv2) or open an issue.
+**Made with ❤️ for the OSINT community**
+
+[⭐ Star this repo](https://github.com/iNeenah/GEoSINTv2) • [🐛 Report Issues](https://github.com/iNeenah/GEoSINTv2/issues) • [💬 Discussions](https://github.com/iNeenah/GEoSINTv2/discussions)
+
+</div>

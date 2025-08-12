@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import './App.css';
+import TextAnimator from './components/TextAnimator';
 
 interface AnalysisResult {
   country: string;
@@ -46,6 +47,8 @@ function App() {
   const [analysisMode, setAnalysisMode] = useState<'single' | 'multi' | 'lens'>('single');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const multiFileInputRef = useRef<HTMLInputElement>(null);
+
+
 
   const openInGoogleMaps = (lat: number, lng: number) => {
     const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
@@ -229,10 +232,23 @@ function App() {
         <div className="container">
           <div className="header-brand">
             <div className="logo">
-              <span className="logo-text">GeoSINT</span>
+              <TextAnimator 
+                className="logo-text" 
+                trigger="hover"
+                colors={['#667eea', '#764ba2', '#f093fb', '#4facfe']}
+              >
+                GeoSINT
+              </TextAnimator>
               <span className="logo-badge">AI</span>
             </div>
-            <p className="header-description">Powered by Advanced Geolocation Intelligence</p>
+            <div className="header-description">
+              <TextAnimator 
+                trigger="hover"
+                colors={['#ffffff', '#667eea', '#f093fb']}
+              >
+                Powered by Advanced Geolocation Intelligence
+              </TextAnimator>
+            </div>
           </div>
         </div>
       </header>
@@ -241,9 +257,15 @@ function App() {
       <section className="hero">
         <div className="container">
           <div className="hero-content">
-            <h2 className="hero-title">
-              AI-Powered Geospatial Intelligence
-            </h2>
+            <div className="hero-title">
+              <TextAnimator 
+                trigger="auto"
+                delay={1000}
+                colors={['#ffffff', '#667eea', '#764ba2', '#f093fb']}
+              >
+                <h2>AI-Powered Geospatial Intelligence</h2>
+              </TextAnimator>
+            </div>
             <p className="hero-subtitle">
               Extract geographical information, architectural details, and location insights from images using advanced AI technology.
             </p>
@@ -256,7 +278,14 @@ function App() {
         <div className="container">
           {/* Analysis Mode Selector */}
           <div className="mode-selector">
-            <h3>Analysis Mode</h3>
+            <div className="mode-selector-title">
+              <TextAnimator 
+                trigger="hover"
+                colors={['#667eea', '#764ba2', '#f093fb']}
+              >
+                <h3>Analysis Mode</h3>
+              </TextAnimator>
+            </div>
             <div className="mode-buttons">
               <button 
                 className={`mode-btn ${analysisMode === 'single' ? 'active' : ''}`}
@@ -268,7 +297,13 @@ function App() {
                   <path d="M21 15l-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
                 </svg>
                 <div className="mode-info">
-                  <span className="mode-title">AI Analysis</span>
+                  <TextAnimator 
+                    className="mode-title" 
+                    trigger="hover"
+                    colors={['#667eea', '#f093fb']}
+                  >
+                    AI Analysis
+                  </TextAnimator>
                   <span className="mode-desc">Standard OSINT analysis</span>
                 </div>
               </button>
@@ -283,7 +318,13 @@ function App() {
                   <circle cx="11" cy="11" r="3"/>
                 </svg>
                 <div className="mode-info">
-                  <span className="mode-title">Google Lens</span>
+                  <TextAnimator 
+                    className="mode-title" 
+                    trigger="hover"
+                    colors={['#667eea', '#f093fb']}
+                  >
+                    Google Lens
+                  </TextAnimator>
                   <span className="mode-desc">Web image matching</span>
                 </div>
               </button>
@@ -299,7 +340,13 @@ function App() {
                   <rect x="3" y="14" width="7" height="7" rx="1"/>
                 </svg>
                 <div className="mode-info">
-                  <span className="mode-title">Multi-Angle Analysis</span>
+                  <TextAnimator 
+                    className="mode-title" 
+                    trigger="hover"
+                    colors={['#667eea', '#f093fb']}
+                  >
+                    Multi-Angle Analysis
+                  </TextAnimator>
                   <span className="mode-desc">360° precision with 2-6 images</span>
                 </div>
               </button>
@@ -487,7 +534,15 @@ function App() {
           {analysis && (
             <div className="results-section">
               <div className="results-header">
-                <h3>OSINT Analysis Results</h3>
+                <div className="results-title">
+                  <TextAnimator 
+                    trigger="auto"
+                    delay={500}
+                    colors={['#667eea', '#764ba2', '#f093fb']}
+                  >
+                    <h3>OSINT Analysis Results</h3>
+                  </TextAnimator>
+                </div>
                 <div className="confidence-badge">
                   <span className="confidence-label">Confidence</span>
                   <span className="confidence-value">{analysis.confidence}</span>
@@ -496,7 +551,14 @@ function App() {
 
               {/* Primary Location Info */}
               <div className="primary-location">
-                <h4>Primary Location Assessment</h4>
+                <div className="section-title">
+                  <TextAnimator 
+                    trigger="hover"
+                    colors={['#667eea', '#f093fb']}
+                  >
+                    <h4>Primary Location Assessment</h4>
+                  </TextAnimator>
+                </div>
                 <div className="location-grid">
                   <div className="location-item">
                     <span className="label">Country:</span>
@@ -529,7 +591,14 @@ function App() {
               {analysis.detailed_analysis?.primary_coordinates?.lat && analysis.detailed_analysis?.primary_coordinates?.lng && (
                 <div className="map-section">
                   <div className="map-header">
-                    <h4>Location Visualization</h4>
+                    <div className="section-title">
+                      <TextAnimator 
+                        trigger="hover"
+                        colors={['#667eea', '#f093fb']}
+                      >
+                        <h4>Location Visualization</h4>
+                      </TextAnimator>
+                    </div>
                     <div className="map-actions">
                       <button 
                         onClick={() => openInGoogleMaps(
@@ -578,7 +647,14 @@ function App() {
               {/* Evidence Analysis */}
               {analysis.detailed_analysis?.evidence && (
                 <div className="evidence-section">
-                  <h4>Forensic Evidence Analysis</h4>
+                  <div className="section-title">
+                    <TextAnimator 
+                      trigger="hover"
+                      colors={['#667eea', '#f093fb']}
+                    >
+                      <h4>Forensic Evidence Analysis</h4>
+                    </TextAnimator>
+                  </div>
                   <div className="evidence-grid">
                     <div className="evidence-card">
                       <h5>Signage</h5>
@@ -603,7 +679,14 @@ function App() {
               {/* Alternative Locations */}
               {analysis.detailed_analysis?.alternative_locations && (
                 <div className="alternatives-section">
-                  <h4>Alternative Locations</h4>
+                  <div className="section-title">
+                    <TextAnimator 
+                      trigger="hover"
+                      colors={['#667eea', '#f093fb']}
+                    >
+                      <h4>Alternative Locations</h4>
+                    </TextAnimator>
+                  </div>
                   <div className="alternatives-grid">
                     {analysis.detailed_analysis.alternative_locations.map((location, index) => (
                       location.lat && location.lng && (
@@ -643,7 +726,14 @@ function App() {
 
               {/* Full Analysis */}
               <div className="full-analysis-section">
-                <h4>Complete Forensic Analysis</h4>
+                <div className="section-title">
+                  <TextAnimator 
+                    trigger="hover"
+                    colors={['#667eea', '#f093fb']}
+                  >
+                    <h4>Complete Forensic Analysis</h4>
+                  </TextAnimator>
+                </div>
                 <div className="analysis-content">
                   <pre>{analysis.reasoning}</pre>
                 </div>
