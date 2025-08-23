@@ -47,8 +47,126 @@ function App() {
   const [analysisMode, setAnalysisMode] = useState<'single' | 'multi' | 'lens'>('single');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const multiFileInputRef = useRef<HTMLInputElement>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+  const [showPasteHint, setShowPasteHint] = useState(false);
 
 
+
+  // Función para manejar pegado desde portapapeles
+  const handlePaste = async (event: ClipboardEvent) => {
+    event.preventDefault();
+    const items = event.clipboardData?.items;
+    
+    if (!items) return;
+    
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      
+      if (item.type.indexOf('image') !== -1) {
+        const file = item.getAsFile();
+        if (file) {
+          if (analysisMode === 'single' || analysisMode === 'lens') {
+            setSelectedFile(file);
+            const url = URL.createObjectURL(file);
+            setPreviewUrl(url);
+            setAnalysis(null);
+            setError(null);
+          } else {
+            // Para modo multi, agregar a la lista existente
+            const newFiles = [...selectedFiles, file];
+            if (newFiles.length > 6) {
+              setError("Máximo 6 imágenes permitidas para análisis multi-angular");
+              return;
+            }
+            
+            setSelectedFiles(newFiles);
+            const newUrls = [...previewUrls, URL.createObjectURL(file)];
+            setPreviewUrls(newUrls);
+            setAnalysis(null);
+            setError(null);
+          }
+          
+          // Mostrar notificación de éxito
+          setShowPasteHint(true);
+          setTimeout(() => setShowPasteHint(false), 2000);
+        }
+        break;
+      }
+    }
+  };
+
+  // Función para manejar drag and drop
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragOver(false);
+    
+    const files = Array.from(event.dataTransfer.files);
+    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    
+    if (imageFiles.length === 0) {
+      setError("Por favor, arrastra solo archivos de imagen");
+      return;
+    }
+    
+    if (analysisMode === 'single' || analysisMode === 'lens') {
+      const file = imageFiles[0];
+      setSelectedFile(file);
+      const url = URL.createObjectURL(file);
+      setPreviewUrl(url);
+      setAnalysis(null);
+      setError(null);
+    } else {
+      const newFiles = [...selectedFiles, ...imageFiles];
+      if (newFiles.length > 6) {
+        setError("Máximo 6 imágenes permitidas para análisis multi-angular");
+        return;
+      }
+      
+      setSelectedFiles(newFiles);
+      const newUrls = [...previewUrls, ...imageFiles.map(file => URL.createObjectURL(file))];
+      setPreviewUrls(newUrls);
+      setAnalysis(null);
+      setError(null);
+    }
+  };
+
+  // Efecto para agregar event listeners globales
+  useEffect(() => {
+    const handleGlobalPaste = (event: ClipboardEvent) => {
+      // Solo activar si estamos en las áreas de upload
+      if (document.activeElement?.closest('.upload-section') || 
+          document.activeElement?.closest('.upload-area') ||
+          document.activeElement?.closest('.multi-upload-area')) {
+        handlePaste(event);
+      }
+    };
+
+    const handleGlobalKeyDown = (event: KeyboardEvent) => {
+      // Mostrar hint cuando se presiona Ctrl+V
+      if (event.ctrlKey && event.key === 'v') {
+        setShowPasteHint(true);
+        setTimeout(() => setShowPasteHint(false), 1500);
+      }
+    };
+
+    document.addEventListener('paste', handleGlobalPaste);
+    document.addEventListener('keydown', handleGlobalKeyDown);
+    
+    return () => {
+      document.removeEventListener('paste', handleGlobalPaste);
+      document.removeEventListener('keydown', handleGlobalKeyDown);
+    };
+  }, [analysisMode, selectedFiles, previewUrls]);
 
   const openInGoogleMaps = (lat: number, lng: number) => {
     const url = `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`;
@@ -354,10 +472,26 @@ function App() {
           </div>
 
           <div className="upload-section">
+            {/* Notificación de pegado */}
+            {showPasteHint && (
+              <div className="paste-notification">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                  <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                  <path d="9 14l2 2 4-4"/>
+                </svg>
+                <span>¡Imagen pegada desde portapapeles!</span>
+              </div>
+            )}
+            
             {analysisMode === 'single' || analysisMode === 'lens' ? (
               <div 
-                className={`upload-area ${selectedFile ? 'has-file' : ''}`}
+                className={`upload-area ${selectedFile ? 'has-file' : ''} ${isDragOver ? 'drag-over' : ''}`}
                 onClick={() => fileInputRef.current?.click()}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                tabIndex={0}
               >
                 {!selectedFile ? (
                   <div className="upload-placeholder">
@@ -370,12 +504,21 @@ function App() {
                     </div>
                     <h3>{analysisMode === 'lens' ? 'Drop your image for Google Lens analysis' : 'Drop your image here'}</h3>
                     <p>{analysisMode === 'lens' ? 'Find this location on the web' : 'or click to browse files'}</p>
-                    <span className="file-types">
-                      {analysisMode === 'lens' 
-                        ? 'Google Lens will search billions of web images • JPG, PNG, GIF' 
-                        : 'Supports JPG, PNG, GIF up to 10MB'
-                      }
-                    </span>
+                    <div className="upload-methods">
+                      <span className="file-types">
+                        {analysisMode === 'lens' 
+                          ? 'Google Lens will search billions of web images • JPG, PNG, GIF' 
+                          : 'Supports JPG, PNG, GIF up to 10MB'
+                        }
+                      </span>
+                      <div className="paste-hint">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                        </svg>
+                        <span>o presiona Ctrl+V para pegar</span>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="file-preview">
@@ -398,7 +541,13 @@ function App() {
                 )}
               </div>
             ) : (
-              <div className="multi-upload-area">
+              <div 
+                className={`multi-upload-area ${isDragOver ? 'drag-over' : ''}`}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                tabIndex={0}
+              >
                 <div className="multi-upload-header">
                   <h3>Multi-Angle Analysis</h3>
                   <p>Upload 2-6 images of the same location from different angles for enhanced precision</p>
@@ -419,7 +568,16 @@ function App() {
                     </div>
                     <h3>Select Multiple Images</h3>
                     <p>Choose 2-6 images of the same location</p>
-                    <span className="file-types">Different angles • Same location • JPG, PNG, GIF</span>
+                    <div className="upload-methods">
+                      <span className="file-types">Different angles • Same location • JPG, PNG, GIF</span>
+                      <div className="paste-hint">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
+                        </svg>
+                        <span>o presiona Ctrl+V para pegar más imágenes</span>
+                      </div>
+                    </div>
                   </div>
                 ) : (
                   <div className="multi-preview-grid">
